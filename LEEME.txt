@@ -1,0 +1,19 @@
+# Mi Escritorio — Mi Mundo
+
+## Publicar en GitHub Pages
+1. Descarga y descomprime `mi_escritorio.zip`.
+2. Sube `index.html`, `manifest.webmanifest`, `sw.js` e `icon.svg` a la raíz de tu repositorio.
+3. Activa GitHub Pages desde Settings → Pages → Deploy from a branch → main → /(root).
+4. Abre la dirección HTTPS en Chrome. El botón **Instalar** aparecerá cuando el navegador permita la instalación.
+
+## Funciones
+- Seis temas predeterminados y ajustes de fondo, texto y tamaño.
+- Añadir aplicaciones y enlaces, editar o eliminar cuadros.
+- Favicon automático del sitio y posibilidad de poner una imagen/icono propio.
+- Arrastrar y soltar para ordenar.
+- Copia de seguridad y restauración en JSON.
+- Hora, fecha y tiempo actual aproximado de Niebla (requiere conexión).
+- Guardado local en el dispositivo.
+
+## Importante
+Los datos se guardan en el almacenamiento del navegador de cada dispositivo. Haz una copia de seguridad para trasladar la configuración a otro dispositivo. Las páginas externas se abren en una pestaña nueva. La instalación PWA requiere HTTPS (GitHub Pages lo ofrece).
