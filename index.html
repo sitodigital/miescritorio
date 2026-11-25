@@ -99,8 +99,43 @@ function openSettings(){let body=`<div class="settings-tabs"><button class="acti
  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab))});
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openItemModal(item=null,type='app'){let a=item||{id:'x'+Date.now(),name:'',url:'',icon:'🌸',iconUrl:'',color:'',type};let body=`<div class="field"><label>Nombre</label><input id="itemName" maxlength="35" value="${esc(a.name)}" placeholder="Ej. Matemáticas"></div><div class="field"><label>Dirección web</label><input id="itemUrl" type="url" value="${esc(a.url)}" placeholder="https://…"></div><div class="field"><label>Icono (emoji)</label><input id="itemIcon" maxlength="8" value="${esc(a.icon||'🌸')}" placeholder="📚"></div><div class="field"><label>Imagen o favicon personalizado (URL)</label><input id="itemIconUrl" value="${esc(a.iconUrl||'')}" placeholder="https://…/icon.png"></div><div class="field"><label>Color del cuadro</label><input id="itemColor" type="color" value="${a.color&&a.color.startsWith('#')?a.color:'#f7d9ed'}"></div><p class="hint">Puedes pegar la URL de una imagen o del favicon. Si lo dejas vacío, se intentará utilizar el favicon del sitio web.</p>`;
- let actions=[{label:'Cancelar',click:closeModal}];if(item)actions.push({label:'Eliminar',click:()=>{if(confirm('¿Eliminar este cuadro?')){state.apps=state.apps.filter(x=>x.id!==a.id);save();render();closeModal()}}});actions.push({label:'Guardar',primary:true,click:()=>{let name=document.getElementById('itemName').value.trim(),url=document.getElementById('itemUrl').value.trim();if(!name||!url){alert('Escribe un nombre y una dirección web.');return}if(!/^https?:\/\//i.test(url))url='https://'+url;let iconUrl=document.getElementById('itemIconUrl').value.trim();if(!iconUrl){try{iconUrl='https://www.google.com/s2/favicons?domain='+new URL(url).hostname+'&sz=128'}catch(e){}}let obj={...a,name,url,icon:document.getElementById('itemIcon').value||'🌸',iconUrl,color:document.getElementById('itemColor').value,type:a.type||type};let idx=state.apps.findIndex(x=>x.id===a.id);if(idx>=0)state.apps[idx]=obj;else state.apps.push(obj);save();render();closeModal()}});showModal(item?'Editar cuadro':'Añadir '+(type==='link'?'enlace':'aplicación'),body,actions)}
+function openItemModal(item=null,type='app'){
+ let a=item||{id:'x'+Date.now(),name:'',url:'',icon:'🌸',iconUrl:'',color:'',type};
+ let body=`<div class="field"><label>Nombre</label><input id="itemName" maxlength="35" value="${esc(a.name)}" placeholder="Ej. Matemáticas"></div>
+ <div class="field"><label>Dirección web</label><input id="itemUrl" type="url" value="${esc(a.url)}" placeholder="https://…"></div>
+ <div class="field"><label>Icono (emoji)</label><input id="itemIcon" maxlength="8" value="${esc(a.icon||'🌸')}" placeholder="📚"></div>
+ <div class="field"><label>Elegir icono desde una carpeta</label><input id="itemIconFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"><span class="hint">Selecciona una imagen de tu móvil u ordenador. Tamaño máximo: 700 KB.</span></div>
+ <div class="field"><label>Imagen o favicon personalizado (URL)</label><input id="itemIconUrl" value="${esc(a.iconUrl||'')}" placeholder="https://…/icon.png"></div>
+ <div class="field"><label>Color del cuadro</label><input id="itemColor" type="color" value="${a.color&&a.color.startsWith('#')?a.color:'#f7d9ed'}"></div>
+ <p class="hint">Si eliges un archivo, tendrá prioridad sobre la URL y el favicon automático. Puedes cambiarlo cuando quieras.</p>`;
+ let actions=[{label:'Cancelar',click:closeModal}];
+ if(item)actions.push({label:'Eliminar',click:()=>{if(confirm('¿Eliminar este cuadro?')){state.apps=state.apps.filter(x=>x.id!==a.id);save();render();closeModal()}}});
+ actions.push({label:'Guardar',primary:true,click:()=>{
+   let name=document.getElementById('itemName').value.trim(),url=document.getElementById('itemUrl').value.trim();
+   if(!name||!url){alert('Escribe un nombre y una dirección web.');return}
+   if(!/^https?:\/\//i.test(url))url='https://'+url;
+   let file=document.getElementById('itemIconFile').files[0];
+   if(file){
+     if(!file.type.startsWith('image/')){alert('Selecciona un archivo de imagen.');return}
+     if(file.size>700*1024){alert('La imagen ocupa más de 700 KB. Elige una imagen más pequeña.');return}
+     let reader=new FileReader();
+     reader.onload=()=>saveItem(reader.result);
+     reader.onerror=()=>alert('No se pudo leer la imagen. Prueba con otro archivo.');
+     reader.readAsDataURL(file);
+   }else{
+     let iconUrl=document.getElementById('itemIconUrl').value.trim();
+     if(!iconUrl){try{iconUrl='https://www.google.com/s2/favicons?domain='+new URL(url).hostname+'&sz=128'}catch(e){}}
+     saveItem(iconUrl);
+   }
+   function saveItem(iconUrl){
+     let obj={...a,name,url,icon:document.getElementById('itemIcon').value||'🌸',iconUrl,color:document.getElementById('itemColor').value,type:a.type||type};
+     let idx=state.apps.findIndex(x=>x.id===a.id);
+     if(idx>=0)state.apps[idx]=obj;else state.apps.push(obj);
+     try{save();render();closeModal()}catch(e){alert('No se ha podido guardar. La imagen puede ser demasiado grande.')}
+   }
+ }});
+ showModal(item?'Editar cuadro':'Añadir '+(type==='link'?'enlace':'aplicación'),body,actions)
+}
 function backup(){let blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='copia-mi-escritorio.json';a.click();URL.revokeObjectURL(u)}
 function restore(file){let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.apps))throw Error();state={...state,...d};save();applyTheme(state.theme);document.body.style.backgroundImage=state.bgImage?`url("${state.bgImage}")`:'';alert('Copia restaurada correctamente.')}catch(e){alert('No se ha podido leer la copia. Comprueba que sea un archivo de Mi Escritorio.')}};r.readAsText(file)}
 document.getElementById('addApp').onclick=()=>openItemModal(null,'app');document.getElementById('addLink').onclick=()=>openItemModal(null,'link');document.getElementById('themesBtn').onclick=openThemeModal;document.getElementById('settingsBtn').onclick=openSettings;document.getElementById('backupBtn').onclick=backup;document.getElementById('restoreBtn').onclick=()=>document.getElementById('fileRestore').click();document.getElementById('fileRestore').onchange=e=>{if(e.target.files[0])restore(e.target.files[0]);e.target.value=''};
